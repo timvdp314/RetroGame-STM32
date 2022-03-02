@@ -47,7 +47,6 @@ public:
 	void gameUpdate();
 	void screenUpdate();
 
-
 // Helper methods
 public:
 	uint16_t getTime(TIM_HandleTypeDef* clk);
@@ -82,8 +81,8 @@ private:
 
 	//Starting id's for each entity
 	//Id's are in order of player -> snowball -> powerup -> icecube
-	const uint8_t PLAYER_ID = 0;
-	const uint8_t SNOWBALL_ID = PLAYER_COUNT;
+	const uint8_t PLAYER_ID = 1;
+	const uint8_t SNOWBALL_ID = PLAYER_ID + PLAYER_COUNT;
 	const uint8_t POWERUP_ID = SNOWBALL_ID + SNOWBALL_COUNT;
 	const uint8_t ICECUBE_ID = POWERUP_ID + POWERUP_COUNT;
 };

@@ -41,13 +41,20 @@ public:
 
 public:
 	virtual void updatePos();
+	virtual bool hasChanged();
+	virtual void updateChanges();
 
 protected:
-	bool enabled = 0;
 	uint8_t id = 0;
 
+	bool en = 0;
 	uint16_t x = 0;
 	uint16_t y = 0;
+
+	bool en_prev = 0;
+	uint16_t x_prev = 0;
+	uint16_t y_prev = 0;
+
 	int16_t x_spd = 0;
 	int16_t y_spd = 0;
 

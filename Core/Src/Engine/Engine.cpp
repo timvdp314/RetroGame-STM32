@@ -34,8 +34,23 @@ Engine::Engine(TIM_HandleTypeDef* refresh_clk,
 
 	player[0].setX(400);
 	player[0].setY(300);
-//	player[0].setX_spd(200);
 	player[0].setEnabled(1);
+
+	snowball[0].setY_spd(75);
+	snowball[0].setY(200);
+	snowball[0].setX(200);
+	snowball[0].setEnabled(1);
+
+	snowball[1].setX_spd(100);
+	snowball[1].setY(200);
+	snowball[1].setX(300);
+	snowball[1].setEnabled(0);
+
+	snowball[2].setY_spd(80);
+	snowball[2].setX_spd(-30);
+	snowball[2].setY(200);
+	snowball[2].setX(300);
+	snowball[2].setEnabled(1);
 }
 
 Engine::~Engine() {
@@ -47,7 +62,7 @@ void Engine::gameLoop()
 {
 	gameUpdate();
 
-	if ( getTime(refresh_clk) > REFRESH_PRESCALER )
+	if ( getTime(refresh_clk) > REFRESH_PRESCALER)
 	{
 		screenUpdate();
 		setTime(refresh_clk, 0);
@@ -79,13 +94,40 @@ void Engine::gameUpdate()
 	if ( getTime(tick_clk) )
 	{
 		player[0].updatePos();
+//		snowball[0].updatePos();
+//		snowball[1].updatePos();
+//		snowball[2].updatePos();
 		setTime(tick_clk, 0);
 	}
 }
 
 void Engine::screenUpdate()
 {
-	spi.send_gfx_packet(player[0]);
+//	for (Player p : player)
+//		if ( p.hasChanged() )
+//		{
+//			p.updateChanges();
+//			spi.send_gfx_packet(p);
+//		}
+
+	if (player[0].hasChanged())
+	{
+		player[0].updateChanges();
+		spi.send_gfx_packet(player[0]);
+	}
+
+//	for (Snowball s : snowball)
+//		if ( s.hasChanged() )
+//		{
+//			s.updateChanges();
+//			spi.send_gfx_packet(s);
+//		}
+
+//	spi.send_gfx_packet(snowball[0]);
+//	spi.send_gfx_packet(snowball[1]);
+//	spi.send_gfx_packet(snowball[2]);
+
+	spi.send_confirm();
 }
 
 //////////////////////////

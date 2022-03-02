@@ -21,14 +21,14 @@ void IObject::setX(uint16_t x) 		   	{ this->x = x; }
 void IObject::setY(uint16_t y) 		   	{ this->y = y; }
 void IObject::setX_spd(int16_t x_spd)   { this->x_spd = x_spd; }
 void IObject::setY_spd(int16_t y_spd)   { this->y_spd = y_spd; }
-void IObject::setEnabled(bool enabled) 	{ this->enabled = enabled; }
+void IObject::setEnabled(bool enabled) 	{ this->en = enabled; }
 void IObject::setId(uint8_t id) 	   	{ this->id = id; }
 
 uint16_t IObject::getX() const    	   	{ return x; }
 uint16_t IObject::getY() const         	{ return y; }
 int16_t IObject::getX_spd() const       { return x_spd; }
 int16_t IObject::getY_spd() const       { return y_spd; }
-bool IObject::getEnabled() const       	{ return enabled; }
+bool IObject::getEnabled() const       	{ return en; }
 uint8_t IObject::getId() const			{ return id; }
 //////////////////////////////////
 
@@ -37,9 +37,8 @@ void IObject::updatePos()
 	x_tick += x_spd;
 	y_tick += y_spd;
 
-//	char str1[20];
-//	sprintf(str1, "%d", y_tick);
-//	debugPrintln( str1 );
+	x %= 801;
+	y %= 521;
 
 	if (x_tick > TICK_MAX)
 	{
@@ -62,4 +61,16 @@ void IObject::updatePos()
 		y--;
 		y_tick = TICK_MAX;
 	}
+}
+
+bool IObject::hasChanged()
+{
+	return ( x != x_prev || y != y_prev || en != en_prev );
+}
+
+void IObject::updateChanges()
+{
+	x_prev = x;
+	y_prev = y;
+	en_prev = en;
 }

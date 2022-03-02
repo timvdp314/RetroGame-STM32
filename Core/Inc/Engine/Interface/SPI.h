@@ -34,6 +34,7 @@ public:
 
 public:
 	void send_gfx_packet(const IObject& object);
+	void send_confirm();
 
 private:
 	uint8_t sck_cycle = 0;
