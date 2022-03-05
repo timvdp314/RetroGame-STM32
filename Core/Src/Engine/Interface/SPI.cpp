@@ -33,15 +33,15 @@ void SPI::send_gfx_packet(const IObject& object)
 	packet_gfx |= id << 20;
 	packet_gfx |= enabled << 27;
 
-	char str1[20];
-	sprintf(str1, "%d", id);
-	debugPrint( str1 );
-	debugPrint( " " );
-	sprintf(str1, "%d", y);
-	debugPrint( str1 );
-	debugPrint( " " );
-	sprintf(str1, "%d", x);
-	debugPrintln( str1 );
+//	char str1[20];
+//	sprintf(str1, "%d", id);
+//	debugPrint( str1 );
+//	debugPrint( " " );
+//	sprintf(str1, "%d", y);
+//	debugPrint( str1 );
+//	debugPrint( " " );
+//	sprintf(str1, "%d", x);
+//	debugPrintln( str1 );
 ////
 //	char buffer[33];
 //	buffer[33 - 1] = '\0';

@@ -45,7 +45,15 @@ public:
 public:
 	void gameLoop();
 	void gameUpdate();
+	void spritesUpdate();
 	void screenUpdate();
+
+// Sprite functions
+	void spritePosUpdate(IObject*);
+	uint8_t isColliding(IObject*);
+
+// Misc
+	void playerInput();
 
 // Helper methods
 public:
@@ -79,12 +87,24 @@ private:
 	const uint8_t POWERUP_COUNT = 3;
 	const uint8_t ICECUBE_COUNT = 10;
 
-	//Starting id's for each entity
-	//Id's are in order of player -> snowball -> powerup -> icecube
+	// Starting id's for each entity
+	// Id's are in order of player -> snowball -> powerup -> icecube
 	const uint8_t PLAYER_ID = 1;
 	const uint8_t SNOWBALL_ID = PLAYER_ID + PLAYER_COUNT;
 	const uint8_t POWERUP_ID = SNOWBALL_ID + SNOWBALL_COUNT;
 	const uint8_t ICECUBE_ID = POWERUP_ID + POWERUP_COUNT;
+
+	// Sprite data
+	const uint8_t PLAYER_W = 16;
+	const uint8_t PLAYER_H = 16;
+	const uint8_t SNOWBALL_W = 10;
+	const uint8_t SNOWBALL_H = 10;
+
+	// Screen information
+	const uint16_t XMIN = 150; //130
+	const uint16_t XMAX = 770; //800
+	const uint16_t YMIN = 40;  //15
+	const uint16_t YMAX = 500; //531
 };
 
 #endif /* INC_ENGINE_ENGINE_H_ */

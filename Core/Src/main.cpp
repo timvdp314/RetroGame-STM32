@@ -117,13 +117,6 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-
-//	  if (__HAL_TIM_GET_COUNTER(&htim16) > 1000)
-//	  {
-//		  HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
-//		  debugPrint(&huart2, "Test");
-//		  __HAL_TIM_SET_COUNTER(&htim16, 0);
-//	  }
   }
   /* USER CODE END 3 */
 }
