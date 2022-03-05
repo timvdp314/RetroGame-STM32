@@ -27,6 +27,10 @@ public:
 public:
 	virtual void setX(uint16_t x);
 	virtual void setY(uint16_t y);
+	virtual void setX_sub(uint16_t x_sub);
+	virtual void setY_sub(uint16_t y_sub);
+	virtual void setW(uint8_t w);
+	virtual void setH(uint8_t h);
 	virtual void setX_spd(int16_t x_spd);
 	virtual void setY_spd(int16_t y_spd);
 	virtual void setEnabled(bool enabled);
@@ -34,6 +38,10 @@ public:
 
 	virtual uint16_t getX() const;
 	virtual uint16_t getY() const;
+	virtual int16_t getX_sub() const;
+	virtual int16_t getY_sub() const;
+	virtual uint8_t getW() const;
+	virtual uint8_t getH() const;
 	virtual int16_t getX_spd() const;
 	virtual int16_t getY_spd() const;
 	virtual bool getEnabled() const;
@@ -42,7 +50,6 @@ public:
 public:
 	virtual void updatePos();
 	virtual bool hasChanged();
-	virtual void updateChanges();
 
 protected:
 	uint8_t id = 0;
@@ -50,6 +57,10 @@ protected:
 	bool en = 0;
 	uint16_t x = 0;
 	uint16_t y = 0;
+	int16_t x_sub = 0;
+	int16_t y_sub = 0;
+	uint8_t w = 0;
+	uint8_t h = 0;
 
 	bool en_prev = 0;
 	uint16_t x_prev = 0;
@@ -58,9 +69,7 @@ protected:
 	int16_t x_spd = 0;
 	int16_t y_spd = 0;
 
-	int16_t x_tick = 0;
-	int16_t y_tick = 0;
-	const uint16_t TICK_MAX = 1000;
+	const uint16_t SUBPIX_MAX = 1000;
 };
 
 #endif /* INC_ENGINE_GAME_ENTITIES_IOBJECT_H_ */
