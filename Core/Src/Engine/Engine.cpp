@@ -13,13 +13,16 @@ Engine::Engine() {
 }
 
 Engine::Engine(TIM_HandleTypeDef* refresh_clk,
-			   TIM_HandleTypeDef* tick_clk)
+			   TIM_HandleTypeDef* tick_clk,
+			   TIM_HandleTypeDef* debug_clk)
 {
 	//Screen refresh clock
 	this->refresh_clk = refresh_clk;
 	this->tick_clk = tick_clk;
+	this->debug_clk = debug_clk;
 
-	// Assign object ID's
+	/// Entities initialisation ///
+
 	for (int i = 0; i < PLAYER_COUNT; i++)
 	{
 		player[i].setId(PLAYER_ID + i);
@@ -40,14 +43,11 @@ Engine::Engine(TIM_HandleTypeDef* refresh_clk,
 	for (int i = 0; i < ICECUBE_COUNT; i++)
 		icecube[i].setId(ICECUBE_ID + i);
 
-	player[0].setX(400);
-	player[0].setY(300);
-	player[0].setEnabled(1);
+	///////////////////////////////////
 
-	snowball[0].setY_spd(75);
-	snowball[0].setY(200);
-	snowball[0].setX(200);
-	snowball[0].setEnabled(1);
+	player[0].setX(400);
+	player[0].setY(400);
+	player[0].setEnabled(1);
 
 	snowball[1].setY_spd(80);
 	snowball[1].setX_spd(-30);
@@ -63,7 +63,7 @@ Engine::Engine(TIM_HandleTypeDef* refresh_clk,
 
 	snowball[3].setX_spd(125);
 	snowball[3].setY(350);
-	snowball[3].setX(100);
+	snowball[3].setX(200);
 	snowball[3].setEnabled(1);
 //
 	snowball[4].setY_spd(-40);
@@ -81,10 +81,29 @@ Engine::~Engine() {
 ////////////////////////////////////////////////////////
 void Engine::gameLoop()
 {
-	gameUpdate();
+	static uint8_t r = 0;
+	static uint16_t t = 0;
 
-	if ( getTime(refresh_clk) > REFRESH_PRESCALER)
+//	gameUpdate();
+
+	uint16_t clk_t = getTime(refresh_clk);
+
+	if ( clk_t >= REFRESH_PRESCALER)
 	{
+		gameUpdate();
+		t += clk_t;
+		r++;
+
+		if (r >= 40)
+		{
+			char str1[20];
+			sprintf( str1, "%d", getTime(debug_clk) );
+			debugPrintln( str1 );
+
+			setTime(debug_clk, 0);
+			r = 0;
+		}
+
 		screenUpdate();
 		setTime(refresh_clk, 0);
 	}
@@ -133,19 +152,53 @@ void Engine::screenUpdate()
 
 void Engine::spritePosUpdate(IObject* spr)
 {
-	uint8_t collision = isColliding(spr);
+	spriteSubpixUpdate(spr);
 
-	if ( collision & (1 << 0) || collision & (1 << 1) ) spr->setX_spd(0);
-	if ( collision & (1 << 2) || collision & (1 << 3) ) spr->setY_spd(0);
+	uint8_t coll = isColliding(spr);
 
-	spr->updatePos();
+	if ( coll & (COLL_RIGHT | COLL_LEFT) && spr->hasChanged(CHECK_X) )
+		spr->x_spd *= -1;
 
-	// Check for sprite wrap
-	if 	 	(spr->getX() > XMAX) spr->setX(XMIN);
-	else if (spr->getX() < XMIN) spr->setX(XMAX);
+	if ( coll & (COLL_BOTTOM | COLL_TOP) && spr->hasChanged(CHECK_Y) )
+		spr->y_spd *= -1;
+}
 
-	if 	 	(spr->getY() > YMAX) spr->setY(YMIN);
-	else if (spr->getY() < YMIN) spr->setY(YMAX);
+void Engine::spriteSubpixUpdate(IObject* s)
+{
+	s->x_sub += s->x_spd;
+	s->y_sub += s->y_spd;
+
+	uint8_t coll = isColliding(s);
+
+	if (s->x_sub > SUBPIX_MAX)
+	{
+		if ( not ( coll & (COLL_RIGHT) ) )
+			s->x++;
+
+		s->x_sub %= SUBPIX_MAX;
+	}
+	else if (s->x_sub < 0)
+	{
+		if ( not ( coll & (COLL_LEFT) ) )
+			s->x--;
+
+		s->x_sub = SUBPIX_MAX;
+	}
+
+	if (s->y_sub > SUBPIX_MAX)
+	{
+		if ( not ( coll & (COLL_BOTTOM) ) )
+			s->y++;
+
+		s->y_sub %= SUBPIX_MAX;
+	}
+	else if (s->y_sub < 0)
+	{
+		if ( not ( coll & (COLL_TOP) ) )
+			s->y--;
+
+		s->y_sub = SUBPIX_MAX;
+	}
 }
 
 uint8_t Engine::isColliding(IObject* spr)
@@ -159,8 +212,8 @@ uint8_t Engine::isColliding(IObject* spr)
 
 	if (xmax >= XMAX) res |= 1 << 0; // Collision on right side
 	if (xmin <= XMIN) res |= 1 << 1; // Collision on left side
-	if (ymax >= YMAX) res |= 1 << 2; // Collision on top side
-	if (ymin <= YMIN) res |= 1 << 3; // Collision on bottom side
+	if (ymax >= YMAX) res |= 1 << 2; // Collision on bottom side
+	if (ymin <= YMIN) res |= 1 << 3; // Collision on top side
 
 	return res;
 }
@@ -172,18 +225,18 @@ void Engine::playerInput()
 {
     if (getInput(P1_UP_PORT, P1_UP_PIN))
     {
-        player[0].setY_spd(-50);
+        player[0].setY_spd(-75);
     }
     else if (getInput(P1_DOWN_PORT, P1_DOWN_PIN))
     {
-        player[0].setY_spd(50);
+        player[0].setY_spd(75);
     }
     else if (getInput(P1_LEFT_PORT, P1_LEFT_PIN))
     {
-        player[0].setX_spd(-50);
+        player[0].setX_spd(-75);
     }
     else if (getInput(P1_RIGHT_PORT, P1_RIGHT_PIN))
-        player[0].setX_spd(50);
+        player[0].setX_spd(75);
     else
     {
         player[0].setX_spd(0);

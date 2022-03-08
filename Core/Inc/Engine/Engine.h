@@ -32,13 +32,21 @@ extern UART_HandleTypeDef huart2;
 
 #include <Engine/Interface/SPI.h>
 
-#define REFRESH_PRESCALER 20
+#define REFRESH_PRESCALER 25
+
+#define COLL_RIGHT 1 << 0
+#define COLL_LEFT 1 << 1
+#define COLL_BOTTOM 1 << 2
+#define COLL_TOP 1 << 3
+
+#define SUBPIX_MAX 1000
 
 class Engine {
 public:
 	Engine();
 	Engine(TIM_HandleTypeDef* refresh_clk,
-		   TIM_HandleTypeDef* tick_clk);
+		   TIM_HandleTypeDef* tick_clk,
+		   TIM_HandleTypeDef* debug_clk);
 	virtual ~Engine();
 
 // Core methods
@@ -50,6 +58,7 @@ public:
 
 // Sprite functions
 	void spritePosUpdate(IObject*);
+	void spriteSubpixUpdate(IObject*);
 	uint8_t isColliding(IObject*);
 
 // Misc
@@ -78,6 +87,7 @@ private:
 private:
 	TIM_HandleTypeDef* refresh_clk;
 	TIM_HandleTypeDef* tick_clk;
+	TIM_HandleTypeDef* debug_clk;
 
 
 // Constants

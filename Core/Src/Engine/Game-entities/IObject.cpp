@@ -30,8 +30,8 @@ void IObject::setId(uint8_t id) 	   	{ this->id = id; }
 
 uint16_t IObject::getX() const    	   	{ return x; }
 uint16_t IObject::getY() const         	{ return y; }
-int16_t IObject::setX_sub() 			{ return x_sub; }
-int16_t IObject::setY_sub()   			{ return y_sub; }
+int16_t IObject::getX_sub() const		{ return x_sub; }
+int16_t IObject::getY_sub() const		{ return y_sub; }
 uint8_t IObject::getW() const    	   	{ return w; }
 uint8_t IObject::getH() const         	{ return h; }
 int16_t IObject::getX_spd() const       { return x_spd; }
@@ -42,42 +42,75 @@ uint8_t IObject::getId() const			{ return id; }
 
 void IObject::updatePos()
 {
-	x_tick += x_spd;
-	y_tick += y_spd;
+	x_sub += x_spd;
+	y_sub += y_spd;
 
-	if (x_tick > TICK_MAX)
+	if (x_sub > TICK_MAX)
 	{
 		x++;
-		x_tick %= TICK_MAX;
+		x_sub %= TICK_MAX;
 	}
-	else if (x_tick < 0)
+	else if (x_sub < 0)
 	{
 		x--;
-		x_tick = TICK_MAX;
+		x_sub = TICK_MAX;
 	}
 
-	if (y_tick > TICK_MAX)
+	if (y_sub > TICK_MAX)
 	{
 		y++;
-		y_tick %= TICK_MAX;
+		y_sub %= TICK_MAX;
 	}
-	else if (y_tick < 0)
+	else if (y_sub < 0)
 	{
 		y--;
-		y_tick = TICK_MAX;
+		y_sub = TICK_MAX;
 	}
 }
 
-bool IObject::hasChanged()
+bool IObject::hasChanged(uint8_t coord)
 {
-	if ( x != x_prev || y != y_prev || en != en_prev )
+	if (coord == CHECK_ANY)
 	{
-		x_prev = x;
-		y_prev = y;
-		en_prev = en;
+		if ( x != x_prev || y != y_prev || en != en_prev ) // Check for any change
+		{
+			x_prev = x;
+			y_prev = y;
+			en_prev = en;
 
-		return true;
+			return true;
+		}
+		else
+		{
+			return false;
+		}
 	}
-	else
-		return false;
+	else if (coord == CHECK_X) // Check for change in X-coordinate
+	{
+		if ( x != x_prev )
+		{
+			x_prev = x;
+
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+	else if (coord == CHECK_Y) // Check for change in Y-coordinate
+	{
+		if ( y != y_prev )
+		{
+			y_prev = y;
+
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	return false;
 }
