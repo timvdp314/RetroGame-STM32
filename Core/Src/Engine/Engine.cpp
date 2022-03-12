@@ -45,31 +45,32 @@ Engine::Engine(TIM_HandleTypeDef* refresh_clk,
 
 	///////////////////////////////////
 
-	player[0].setX(400);
-	player[0].setY(400);
+	player[0].setX(310);
+	player[0].setY(230); // middle of screen
 	player[0].setEnabled(1);
 
-	snowball[1].setY_spd(80);
-	snowball[1].setX_spd(-30);
-	snowball[1].setY(200);
-	snowball[1].setX(300);
+	snowball[1].setY_spd(-125);
+	snowball[1].setX_spd(0);
+	snowball[1].setY(480);
+	snowball[1].setX(310);
 	snowball[1].setEnabled(1);
 
-	snowball[2].setY_spd(-20);
-	snowball[2].setX_spd(-40);
-	snowball[2].setY(150);
-	snowball[2].setX(500);
+	snowball[2].setY_spd(-125);
+	snowball[2].setX_spd(0);
+	snowball[2].setY(480);
+	snowball[2].setX(350);
 	snowball[2].setEnabled(1);
 
 	snowball[3].setX_spd(125);
-	snowball[3].setY(350);
-	snowball[3].setX(200);
+	snowball[3].setY_spd(0);
+	snowball[3].setY(230);
+	snowball[3].setX(160);
 	snowball[3].setEnabled(1);
 //
-	snowball[4].setY_spd(-40);
-	snowball[4].setX_spd(100);
-	snowball[4].setY(300);
-	snowball[4].setX(300);
+	snowball[4].setY_spd(0);
+	snowball[4].setX_spd(125);
+	snowball[4].setY(260);
+	snowball[4].setX(160);
 	snowball[4].setEnabled(1);
 }
 
@@ -84,13 +85,13 @@ void Engine::gameLoop()
 	static uint8_t r = 0;
 	static uint16_t t = 0;
 
-//	gameUpdate();
+ 	gameUpdate();
 
 	uint16_t clk_t = getTime(refresh_clk);
 
 	if ( clk_t >= REFRESH_PRESCALER)
 	{
-		gameUpdate();
+		//gameUpdate();
 		t += clk_t;
 		r++;
 
@@ -112,7 +113,7 @@ void Engine::gameLoop()
 
 void Engine::gameUpdate()
 {
-	playerInput();
+	//playerInput();
 
 	if ( getTime(tick_clk) )
 	{
@@ -156,12 +157,23 @@ void Engine::spritePosUpdate(IObject* spr)
 
 	uint8_t coll = isColliding(spr);
 
-	if ( coll & (COLL_RIGHT | COLL_LEFT) && spr->hasChanged(CHECK_X) )
+	if ( coll & (COLL_RIGHT | COLL_LEFT) && spr->hasChanged(CHECK_X) ) // Collision with border
 		spr->x_spd *= -1;
 
-	if ( coll & (COLL_BOTTOM | COLL_TOP) && spr->hasChanged(CHECK_Y) )
+	if ( coll & (COLL_BOTTOM | COLL_TOP) && spr->hasChanged(CHECK_Y) ) // Collision with border
 		spr->y_spd *= -1;
+
+	if(spr != &player[0]){
+	if ( coll & (COLL_pRIGHT | COLL_pLEFT)
+			&& (spr->getY() == player[0].getY())) // Collision with player
+		spr->x_spd *= -1;
+
+	if ( coll & (COLL_pBOTTOM | COLL_pTOP)
+			&& (spr->getX() == player[0].getX())) // Collision with player
+			spr->y_spd *= -1;
 }
+}
+
 
 void Engine::spriteSubpixUpdate(IObject* s)
 {
@@ -215,6 +227,25 @@ uint8_t Engine::isColliding(IObject* spr)
 	if (ymax >= YMAX) res |= 1 << 2; // Collision on bottom side
 	if (ymin <= YMIN) res |= 1 << 3; // Collision on top side
 
+	if(spr != &player[0]) //Make sure we dont let the player collide with itself
+	{
+		if(((xmax > player[0].getX() - (player[0].getW()) / 2) &&
+			 xmax < player[0].getX() + (player[0].getW()) / 2))
+				res |= 1 << 4;
+
+		if(((xmin > player[0].getX() - (player[0].getW()) / 2) &&
+			 xmin < player[0].getX() + (player[0].getW()) / 2))
+				res |= 1 << 5;
+
+		if(((ymin > player[0].getY() - (player[0].getH()) / 2) &&
+  			 ymin < player[0].getY() + (player[0].getH()) / 2))
+				res |= 1 << 6;
+
+		if(((ymax > player[0].getY() - (player[0].getH()) / 2) &&
+			 ymax < player[0].getY() + (player[0].getH()) / 2))
+				res |= 1 << 7;
+	}
+
 	return res;
 }
 
@@ -262,4 +293,14 @@ void Engine::setTime(TIM_HandleTypeDef* clk, uint16_t time)
 bool Engine::getInput(GPIO_TypeDef* port, uint16_t pin)
 {
     return HAL_GPIO_ReadPin(port, pin);
+}
+void Engine::resetSnowBall(uint8_t ball)
+{
+
+		snowball[ball].setY_spd(0);
+		snowball[ball].setX_spd(100);
+		snowball[ball].setY(230);
+		snowball[ball].setX(160);
+		snowball[ball].setEnabled(1);
+
 }

@@ -38,6 +38,10 @@ extern UART_HandleTypeDef huart2;
 #define COLL_LEFT 1 << 1
 #define COLL_BOTTOM 1 << 2
 #define COLL_TOP 1 << 3
+#define COLL_pRIGHT 1 << 4
+#define COLL_pLEFT 1 << 5
+#define COLL_pBOTTOM 1 << 6
+#define COLL_pTOP 1 << 7
 
 #define SUBPIX_MAX 1000
 
@@ -69,6 +73,7 @@ public:
 	uint16_t getTime(TIM_HandleTypeDef* clk);
 	void setTime(TIM_HandleTypeDef* clk, uint16_t time);
     bool getInput(GPIO_TypeDef* port, uint16_t pin);
+    void resetSnowBall(uint8_t ball);
 
 // Game entities
 private:
