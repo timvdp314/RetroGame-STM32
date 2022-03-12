@@ -27,6 +27,7 @@ void IObject::setX_spd(int16_t x_spd)   { this->x_spd = x_spd; }
 void IObject::setY_spd(int16_t y_spd)   { this->y_spd = y_spd; }
 void IObject::setEnabled(bool enabled) 	{ this->en = enabled; }
 void IObject::setId(uint8_t id) 	   	{ this->id = id; }
+void IObject::setType(SPR type) 		{ this->type = type; }
 
 uint16_t IObject::getX() const    	   	{ return x; }
 uint16_t IObject::getY() const         	{ return y; }
@@ -38,35 +39,8 @@ int16_t IObject::getX_spd() const       { return x_spd; }
 int16_t IObject::getY_spd() const       { return y_spd; }
 bool IObject::getEnabled() const       	{ return en; }
 uint8_t IObject::getId() const			{ return id; }
+SPR IObject::getType() const			{ return type; }
 //////////////////////////////////
-
-void IObject::updatePos()
-{
-	x_sub += x_spd;
-	y_sub += y_spd;
-
-	if (x_sub > TICK_MAX)
-	{
-		x++;
-		x_sub %= TICK_MAX;
-	}
-	else if (x_sub < 0)
-	{
-		x--;
-		x_sub = TICK_MAX;
-	}
-
-	if (y_sub > TICK_MAX)
-	{
-		y++;
-		y_sub %= TICK_MAX;
-	}
-	else if (y_sub < 0)
-	{
-		y--;
-		y_sub = TICK_MAX;
-	}
-}
 
 bool IObject::hasChanged(uint8_t coord)
 {
