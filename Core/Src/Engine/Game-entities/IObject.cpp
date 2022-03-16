@@ -27,7 +27,7 @@ void IObject::setX_spd(int16_t x_spd)   { this->x_spd = x_spd; }
 void IObject::setY_spd(int16_t y_spd)   { this->y_spd = y_spd; }
 void IObject::setEnabled(bool enabled) 	{ this->en = enabled; }
 void IObject::setId(uint8_t id) 	   	{ this->id = id; }
-void IObject::setType(SPR type) 		{ this->type = type; }
+void IObject::setType(SPR type)			{ this->type = type; }
 
 uint16_t IObject::getX() const    	   	{ return x; }
 uint16_t IObject::getY() const         	{ return y; }
@@ -52,6 +52,16 @@ bool IObject::hasChanged(uint8_t coord)
 			y_prev = y;
 			en_prev = en;
 
+			corner[0].x = x + w / 2;
+			corner[0].y = y + h / 2;
+			corner[1].x = x - w / 2;
+			corner[1].y = y + h / 2;
+
+			corner[2].x = x - w / 2;
+			corner[2].y = y - h / 2;
+			corner[3].x = x + w / 2;
+			corner[3].y = y - h / 2;
+
 			return true;
 		}
 		else
@@ -65,6 +75,11 @@ bool IObject::hasChanged(uint8_t coord)
 		{
 			x_prev = x;
 
+			corner[0].x = x + w / 2;
+			corner[1].x = x - w / 2;
+			corner[2].x = x - w / 2;
+			corner[3].x = x + w / 2;
+
 			return true;
 		}
 		else
@@ -77,6 +92,11 @@ bool IObject::hasChanged(uint8_t coord)
 		if ( y != y_prev )
 		{
 			y_prev = y;
+
+			corner[0].y = y + h / 2;
+			corner[1].y = y + h / 2;
+			corner[2].y = y - h / 2;
+			corner[3].y = y - h / 2;
 
 			return true;
 		}
