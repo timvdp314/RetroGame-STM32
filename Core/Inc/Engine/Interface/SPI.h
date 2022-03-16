@@ -18,8 +18,8 @@ extern UART_HandleTypeDef huart2;
 #include <stdint.h>
 
 		//Name	   //GPIO pin number      //Pin on STM32		//Pin on Basys 3 (JB connector)
-#define SPI_SCK    GPIO_PIN_5  //PB5  		    D4  			      A14 (top-right)
-#define SPI_MOSI   GPIO_PIN_3  //PB3 		    D3  			      A16 (left of A14)
+#define SPI_SCK    GPIO_PIN_3  //PB5  		    D3  			      A14 (top-right)
+#define SPI_MOSI   GPIO_PIN_5  //PB3 		    D4  			      A16 (left of A14)
 #define SPI_CS0    GPIO_PIN_4  //PB4  		    D5					  B15 (left of A16)
 #define SPI_CS1    GPIO_PIN_10 //PB10  		    D6					  B16 (left of B15)
 

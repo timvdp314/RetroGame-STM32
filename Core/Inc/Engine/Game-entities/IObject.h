@@ -22,6 +22,12 @@ extern UART_HandleTypeDef huart2;
 
 class Engine;
 
+struct COORD
+{
+	uint16_t x;
+	uint16_t y;
+};
+
 class IObject {
 public:
 	IObject();
@@ -61,6 +67,7 @@ protected:
 	bool en = 0;
 	uint16_t x = 0;
 	uint16_t y = 0;
+
 	int16_t x_sub = 0;
 	int16_t y_sub = 0;
 	uint8_t w = 0;
@@ -72,6 +79,8 @@ protected:
 
 	int16_t x_spd = 0;
 	int16_t y_spd = 0;
+
+	COORD corner[4];
 
 	const uint16_t TICK_MAX = 1000;
 

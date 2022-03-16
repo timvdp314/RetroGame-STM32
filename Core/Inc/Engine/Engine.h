@@ -15,14 +15,14 @@ extern UART_HandleTypeDef huart2;
 ////////////////
 
 		//Name	   //GPIO pin number      //Pin on STM32		
-#define P1_UP_PIN       GPIO_PIN_9  //PA9  		    D8  			      
-#define P1_DOWN_PIN     GPIO_PIN_7  //PC7 		    D9  			      
-#define P1_LEFT_PIN     GPIO_PIN_6  //PB6  		    D10					  
+#define P1_LEFT_PIN     GPIO_PIN_9  //PA9  		    D8
+#define P1_DOWN_PIN     GPIO_PIN_7  //PC7 		    D9
+#define P1_UP_PIN       GPIO_PIN_6  //PB6  		    D10
 #define P1_RIGHT_PIN    GPIO_PIN_7  //PA7  		    D11					 
 
-#define P1_UP_PORT      GPIOA
+#define P1_LEFT_PORT    GPIOA
 #define P1_DOWN_PORT    GPIOC
-#define P1_LEFT_PORT    GPIOB
+#define P1_UP_PORT      GPIOB
 #define P1_RIGHT_PORT   GPIOA
 
 #include <Engine/Game-entities/Player.h>
@@ -70,6 +70,13 @@ public:
 	void setTime(TIM_HandleTypeDef* clk, uint16_t time);
     bool getInput(GPIO_TypeDef* port, uint16_t pin);
 
+// Debug methods
+public:
+    void checkRefreshRate();
+    void printSpriteInfo(IObject* s);
+
+
+/// -- Attributes -- ///
 // Game entities
 private:
 	Player player[2];
@@ -93,9 +100,9 @@ private:
 // Constants
 private:
 	const uint8_t PLAYER_COUNT = 2;
-	const uint8_t SNOWBALL_COUNT = 20;
+	const uint8_t SNOWBALL_COUNT = 8;
 	const uint8_t POWERUP_COUNT = 3;
-	const uint8_t ICECUBE_COUNT = 10;
+	const uint8_t ICECUBE_COUNT = 5;
 
 	// Starting id's for each entity
 	// Id's are in order of player -> snowball -> powerup -> icecube
@@ -105,10 +112,11 @@ private:
 	const uint8_t ICECUBE_ID = POWERUP_ID + POWERUP_COUNT;
 
 	// Sprite data
-	const uint8_t PLAYER_W = 16;
-	const uint8_t PLAYER_H = 16;
-	const uint8_t SNOWBALL_W = 10;
-	const uint8_t SNOWBALL_H = 10;
+	const uint8_t PLAYER_W = 46;
+	const uint8_t PLAYER_H = 50;
+	const uint8_t PLAYER_SPD = 75;
+	const uint8_t SNOWBALL_W = 20;
+	const uint8_t SNOWBALL_H = 20;
 
 	// Screen information
 	const uint16_t XMIN = 150; //130

@@ -45,32 +45,32 @@ Engine::Engine(TIM_HandleTypeDef* refresh_clk,
 
 	///////////////////////////////////
 
-	player[0].setX(400);
-	player[0].setY(400);
+	player[0].setX( (XMAX - XMIN) / 2 + XMIN );
+	player[0].setY( (YMAX - YMIN) / 2 + YMIN );
 	player[0].setEnabled(1);
+	player[0].setId(2);
 
-	snowball[1].setY_spd(80);
-	snowball[1].setX_spd(-30);
-	snowball[1].setY(200);
-	snowball[1].setX(300);
+//	player[1].setX(400);
+//	player[1].setY(400);
+//	player[1].setX_spd(0);
+//	player[1].setY_spd(0);
+//	player[1].setEnabled(0);
+
+	snowball[0].setEnabled(1);
 	snowball[1].setEnabled(1);
-
-	snowball[2].setY_spd(-20);
-	snowball[2].setX_spd(-40);
-	snowball[2].setY(150);
-	snowball[2].setX(500);
 	snowball[2].setEnabled(1);
-
-	snowball[3].setX_spd(125);
-	snowball[3].setY(350);
-	snowball[3].setX(200);
 	snowball[3].setEnabled(1);
-//
-	snowball[4].setY_spd(-40);
-	snowball[4].setX_spd(100);
-	snowball[4].setY(300);
-	snowball[4].setX(300);
 	snowball[4].setEnabled(1);
+//
+//	icecube[0].setId(8);
+//	icecube[0].setY(175);
+//	icecube[0].setX(200);
+//	icecube[0].setEnabled(1);
+//
+//	icecube[1].setId(9);
+//	icecube[1].setY(300);
+//	icecube[1].setX(400);
+//	icecube[1].setEnabled(1);
 }
 
 Engine::~Engine() {
@@ -90,21 +90,10 @@ void Engine::gameLoop()
 
 	if ( clk_t >= REFRESH_PRESCALER)
 	{
-		gameUpdate();
-		t += clk_t;
-		r++;
-
-		if (r >= 40)
-		{
-			char str1[20];
-			sprintf( str1, "%d", getTime(debug_clk) );
-			debugPrintln( str1 );
-
-			setTime(debug_clk, 0);
-			r = 0;
-		}
-
 		screenUpdate();
+		gameUpdate();
+		checkRefreshRate();
+
 		setTime(refresh_clk, 0);
 	}
 }
@@ -113,6 +102,7 @@ void Engine::gameLoop()
 void Engine::gameUpdate()
 {
 	playerInput();
+	snowballSpawner();
 
 	if ( getTime(tick_clk) )
 	{
@@ -131,6 +121,12 @@ void Engine::spritesUpdate()
 	for (int i = 0; i < SNOWBALL_COUNT; i++)
 		if ( snowball[i].getEnabled() && (snowball[i].getX_spd() || snowball[i].getY_spd()) )
 			spritePosUpdate(&snowball[i]);
+
+	for (int i = 0; i < ICECUBE_COUNT; i++)
+		if ( icecube[i].getEnabled() && (icecube[i].getX_spd() || icecube[i].getY_spd()) )
+			spritePosUpdate(&icecube[i]);
+
+	isColliding(&player[0]);
 }
 
 
@@ -144,6 +140,10 @@ void Engine::screenUpdate()
 		if (snowball[i].hasChanged())
 			spi.send_gfx_packet(snowball[i]);
 
+	for (int i = 0; i < ICECUBE_COUNT; i++)
+		if (icecube[i].hasChanged())
+			spi.send_gfx_packet(icecube[i]);
+
 	spi.send_confirm();
 }
 
@@ -154,13 +154,12 @@ void Engine::spritePosUpdate(IObject* spr)
 {
 	spriteSubpixUpdate(spr);
 
-	uint8_t coll = isColliding(spr);
-
-	if ( coll & (COLL_RIGHT | COLL_LEFT) && spr->hasChanged(CHECK_X) )
-		spr->x_spd *= -1;
-
-	if ( coll & (COLL_BOTTOM | COLL_TOP) && spr->hasChanged(CHECK_Y) )
-		spr->y_spd *= -1;
+//
+//	if ( coll & (COLL_RIGHT | COLL_LEFT) && spr->hasChanged(CHECK_X) )
+//		spr->x_spd *= -1;
+//
+//	if ( coll & (COLL_BOTTOM | COLL_TOP) && spr->hasChanged(CHECK_Y) )
+//		spr->y_spd *= -1;
 }
 
 void Engine::spriteSubpixUpdate(IObject* s)
@@ -179,8 +178,8 @@ void Engine::spriteSubpixUpdate(IObject* s)
 	}
 	else if (s->x_sub < 0)
 	{
-		if ( not ( coll & (COLL_LEFT) ) )
-			s->x--;
+//		if ( not ( coll & (COLL_LEFT) ) )
+		*x += (*x_sub / SUBPIX_MAX) - 1;
 
 		s->x_sub = SUBPIX_MAX;
 	}
@@ -194,26 +193,52 @@ void Engine::spriteSubpixUpdate(IObject* s)
 	}
 	else if (s->y_sub < 0)
 	{
-		if ( not ( coll & (COLL_TOP) ) )
-			s->y--;
+//		if ( not ( coll & (COLL_TOP) ) )
+		*y += (*y_sub / SUBPIX_MAX) - 1;
 
 		s->y_sub = SUBPIX_MAX;
 	}
 }
 
-uint8_t Engine::isColliding(IObject* spr)
+uint8_t Engine::isColliding(IObject* s)
 {
 	uint8_t res = 0;
 
-	uint16_t xmax = spr->getX() + (spr->getW()) / 2;
-	uint16_t xmin = spr->getX() - (spr->getW()) / 2;
-	uint16_t ymax = spr->getY() + (spr->getH()) / 2;
-	uint16_t ymin = spr->getY() - (spr->getH()) / 2;
+	uint16_t xmin = s->x - s->w / 2;
+	uint16_t xmax = s->x + s->w / 2;
+	uint16_t ymin = s->y - s->h / 2;
+	uint16_t ymax = s->y + s->h / 2;
 
-	if (xmax >= XMAX) res |= 1 << 0; // Collision on right side
-	if (xmin <= XMIN) res |= 1 << 1; // Collision on left side
-	if (ymax >= YMAX) res |= 1 << 2; // Collision on bottom side
-	if (ymin <= YMIN) res |= 1 << 3; // Collision on top side
+	IObject* o;
+
+	if (s->type == SPR::PLAYER)
+	{
+		for (int i = 0; i < SNOWBALL_COUNT; i++)
+		{
+			o = &snowball[i];
+
+			if (snowball[i].getEnabled())
+			{
+				for (int i = 0; i < 4; i++)
+				{
+					if (o->corner[i].x <= xmax && o->corner[i].x >= xmin &&
+						o->corner[i].y <= ymax && o->corner[i].y >= ymin)
+					{
+						for (int j = 0; j < SNOWBALL_COUNT; j++)
+							snowball[j].x = XMIN - 20;
+
+						s->x = (XMAX - XMIN) / 2 + XMIN;
+						s->y = (YMAX - YMIN) / 2 + YMIN;
+					}
+				}
+			}
+		}
+	}
+
+//	if (xmax >= XMAX) res |= 1 << 0; // Collision on right side
+//	if (xmin <= XMIN) res |= 1 << 1; // Collision on left side
+//	if (ymax >= YMAX) res |= 1 << 2; // Collision on bottom side
+//	if (ymin <= YMIN) res |= 1 << 3; // Collision on top side
 
 	return res;
 }
@@ -224,24 +249,18 @@ uint8_t Engine::isColliding(IObject* spr)
 void Engine::playerInput()
 {
     if (getInput(P1_UP_PORT, P1_UP_PIN))
-    {
-        player[0].setY_spd(-75);
-    }
+        player[0].setY_spd(-PLAYER_SPD);
     else if (getInput(P1_DOWN_PORT, P1_DOWN_PIN))
-    {
-        player[0].setY_spd(75);
-    }
-    else if (getInput(P1_LEFT_PORT, P1_LEFT_PIN))
-    {
-        player[0].setX_spd(-75);
-    }
-    else if (getInput(P1_RIGHT_PORT, P1_RIGHT_PIN))
-        player[0].setX_spd(75);
+        player[0].setY_spd(PLAYER_SPD);
     else
-    {
+    	player[0].setY_spd(0);
+
+    if (getInput(P1_LEFT_PORT, P1_LEFT_PIN))
+        player[0].setX_spd(-PLAYER_SPD);
+    else if (getInput(P1_RIGHT_PORT, P1_RIGHT_PIN))
+        player[0].setX_spd(PLAYER_SPD);
+    else
         player[0].setX_spd(0);
-        player[0].setY_spd(0);
-    }
 }
 
 //////////////////////////
@@ -262,4 +281,36 @@ void Engine::setTime(TIM_HandleTypeDef* clk, uint16_t time)
 bool Engine::getInput(GPIO_TypeDef* port, uint16_t pin)
 {
     return HAL_GPIO_ReadPin(port, pin);
+}
+
+/// -- Debug methods -- ///
+///////////////////////////
+
+void Engine::checkRefreshRate()
+{
+	frame++;
+
+	if (frame >= REFRESH_RATE)
+	{
+		char str1[20];
+		sprintf( str1, "%d", getTime(debug_clk) );
+		debugPrintln( str1 );
+
+		printSpriteInfo(&snowball[0]);
+
+		setTime(debug_clk, 0);
+		frame = 0;
+	}
+}
+
+void Engine::printSpriteInfo(IObject* spr)
+{
+	 char str1[25];
+	 sprintf(str1, "X: %d, Y: %d", spr->x, spr->y);
+	 debugPrintln( str1 );
+	 sprintf(str1, "X-speed: %d, Y-speed: %d", spr->x_spd, spr->y_spd);
+	 debugPrintln( str1 );
+	 sprintf(str1, "X-sub: %d, Y-sub: %d", spr->x_sub, spr->y_sub);
+	 debugPrintln( str1 );
+	 debugPrintln("---");
 }

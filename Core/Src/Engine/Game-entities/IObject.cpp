@@ -78,6 +78,16 @@ bool IObject::hasChanged(uint8_t coord)
 			y_prev = y;
 			en_prev = en;
 
+			corner[0].x = x + w / 2;
+			corner[0].y = y + h / 2;
+			corner[1].x = x - w / 2;
+			corner[1].y = y + h / 2;
+
+			corner[2].x = x - w / 2;
+			corner[2].y = y - h / 2;
+			corner[3].x = x + w / 2;
+			corner[3].y = y - h / 2;
+
 			return true;
 		}
 		else
@@ -91,6 +101,11 @@ bool IObject::hasChanged(uint8_t coord)
 		{
 			x_prev = x;
 
+			corner[0].x = x + w / 2;
+			corner[1].x = x - w / 2;
+			corner[2].x = x - w / 2;
+			corner[3].x = x + w / 2;
+
 			return true;
 		}
 		else
@@ -103,6 +118,11 @@ bool IObject::hasChanged(uint8_t coord)
 		if ( y != y_prev )
 		{
 			y_prev = y;
+
+			corner[0].y = y + h / 2;
+			corner[1].y = y + h / 2;
+			corner[2].y = y - h / 2;
+			corner[3].y = y - h / 2;
 
 			return true;
 		}
