@@ -21,6 +21,7 @@ extern UART_HandleTypeDef huart2;
 #define CHECK_Y 2
 
 class Engine;
+enum class SPR;
 
 struct COORD
 {
@@ -45,6 +46,7 @@ public:
 	virtual void setY_spd(int16_t y_spd);
 	virtual void setEnabled(bool enabled);
 	virtual void setId(uint8_t id);
+	virtual void setType(SPR type);
 
 	virtual uint16_t getX() const;
 	virtual uint16_t getY() const;
@@ -56,13 +58,14 @@ public:
 	virtual int16_t getY_spd() const;
 	virtual bool getEnabled() const;
 	virtual uint8_t getId() const;
+	virtual SPR getType() const;
 
 public:
-	virtual void updatePos();
 	virtual bool hasChanged(uint8_t = CHECK_ANY);
 
 protected:
 	uint8_t id = 0;
+	SPR type;
 
 	bool en = 0;
 	uint16_t x = 0;

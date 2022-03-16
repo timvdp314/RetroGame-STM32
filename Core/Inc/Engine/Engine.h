@@ -8,6 +8,9 @@
 #ifndef INC_ENGINE_ENGINE_H_
 #define INC_ENGINE_ENGINE_H_
 
+// Standard libraries //
+#include <stdlib.h>
+
 // UART debug //
 #include <debug.h>
 
@@ -32,21 +35,25 @@ extern UART_HandleTypeDef huart2;
 
 #include <Engine/Interface/SPI.h>
 
-#define REFRESH_PRESCALER 25
-
 #define COLL_RIGHT 1 << 0
 #define COLL_LEFT 1 << 1
 #define COLL_BOTTOM 1 << 2
 #define COLL_TOP 1 << 3
 
-#define SUBPIX_MAX 1000
+enum class SPR{
+	PLAYER,
+	SNOWBALL,
+	PWUP,
+	ICECUBE
+};
 
 class Engine {
 public:
 	Engine();
 	Engine(TIM_HandleTypeDef* refresh_clk,
 		   TIM_HandleTypeDef* tick_clk,
-		   TIM_HandleTypeDef* debug_clk);
+		   TIM_HandleTypeDef* debug_clk,
+		   uint32_t rand_seed);
 	virtual ~Engine();
 
 // Core methods
@@ -60,6 +67,8 @@ public:
 	void spritePosUpdate(IObject*);
 	void spriteSubpixUpdate(IObject*);
 	uint8_t isColliding(IObject*);
+	void snowballSpawner();
+	void snowballRandomise(IObject*);
 
 // Misc
 	void playerInput();
@@ -111,6 +120,9 @@ private:
 	const uint8_t POWERUP_ID = SNOWBALL_ID + SNOWBALL_COUNT;
 	const uint8_t ICECUBE_ID = POWERUP_ID + POWERUP_COUNT;
 
+	// Snowball data
+	const uint8_t MIN_SPD = 125;
+
 	// Sprite data
 	const uint8_t PLAYER_W = 46;
 	const uint8_t PLAYER_H = 50;
@@ -119,10 +131,23 @@ private:
 	const uint8_t SNOWBALL_H = 20;
 
 	// Screen information
-	const uint16_t XMIN = 150; //130
-	const uint16_t XMAX = 770; //800
-	const uint16_t YMIN = 40;  //15
-	const uint16_t YMAX = 500; //531
+	const uint16_t XMIN = 110; //130
+	const uint16_t XMAX = 800; //800
+	const uint16_t YMIN = 15;  //15
+	const uint16_t YMAX = 513; //531
+
+	const uint16_t TICK_FREQ = 1000;
+	const uint16_t SUBPIX_MAX = 1000;
+
+	const uint8_t REFRESH_RATE = 50;
+	const uint8_t REFRESH_PRESCALER = 1000 / REFRESH_RATE;
+
+	// Misc
+	uint32_t rand_seed = 0;
+
+	// Debug variables
+	uint8_t frame = 0;
+	uint16_t clk_t = 0;
 };
 
 #endif /* INC_ENGINE_ENGINE_H_ */

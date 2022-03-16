@@ -14,7 +14,8 @@ Engine::Engine() {
 
 Engine::Engine(TIM_HandleTypeDef* refresh_clk,
 			   TIM_HandleTypeDef* tick_clk,
-			   TIM_HandleTypeDef* debug_clk)
+			   TIM_HandleTypeDef* debug_clk,
+			   uint32_t rand_seed)
 {
 	//Screen refresh clock
 	this->refresh_clk = refresh_clk;
@@ -28,6 +29,7 @@ Engine::Engine(TIM_HandleTypeDef* refresh_clk,
 		player[i].setId(PLAYER_ID + i);
 		player[i].setW(PLAYER_W);
 		player[i].setH(PLAYER_H);
+		player[i].setType(SPR::PLAYER);
 	}
 
 	for (int i = 0; i < SNOWBALL_COUNT; i++)
@@ -35,13 +37,20 @@ Engine::Engine(TIM_HandleTypeDef* refresh_clk,
 		snowball[i].setId(SNOWBALL_ID + i);
 		snowball[i].setW(SNOWBALL_W);
 		snowball[i].setH(SNOWBALL_H);
+		snowball[i].setType(SPR::SNOWBALL);
 	}
 
 	for (int i = 0; i < POWERUP_COUNT; i++)
+	{
 		powerup[i].setId(POWERUP_ID + i);
+		powerup[i].setType(SPR::PWUP);
+	}
 
 	for (int i = 0; i < ICECUBE_COUNT; i++)
+	{
 		icecube[i].setId(ICECUBE_ID + i);
+		icecube[i].setType(SPR::ICECUBE);
+	}
 
 	///////////////////////////////////
 
@@ -81,11 +90,6 @@ Engine::~Engine() {
 ////////////////////////////////////////////////////////
 void Engine::gameLoop()
 {
-	static uint8_t r = 0;
-	static uint16_t t = 0;
-
-//	gameUpdate();
-
 	uint16_t clk_t = getTime(refresh_clk);
 
 	if ( clk_t >= REFRESH_PRESCALER)
@@ -164,39 +168,39 @@ void Engine::spritePosUpdate(IObject* spr)
 
 void Engine::spriteSubpixUpdate(IObject* s)
 {
-	s->x_sub += s->x_spd;
-	s->y_sub += s->y_spd;
+	uint16_t* x = &s->x; uint16_t* y = &s->y;
+	int16_t* x_sub = &s->x_sub; int16_t* y_sub = &s->y_sub;
+	int16_t* x_spd = &s->x_spd; int16_t* y_spd = &s->y_spd;
+
+	*x_sub += *x_spd * (TICK_FREQ / REFRESH_RATE);
+	*y_sub += *y_spd * (TICK_FREQ / REFRESH_RATE);
 
 	uint8_t coll = isColliding(s);
 
-	if (s->x_sub > SUBPIX_MAX)
+	if (*x_sub > SUBPIX_MAX)
 	{
-		if ( not ( coll & (COLL_RIGHT) ) )
-			s->x++;
+		*x += (*x_sub / SUBPIX_MAX);
 
 		s->x_sub %= SUBPIX_MAX;
 	}
 	else if (s->x_sub < 0)
 	{
-//		if ( not ( coll & (COLL_LEFT) ) )
 		*x += (*x_sub / SUBPIX_MAX) - 1;
 
-		s->x_sub = SUBPIX_MAX;
+		*x_sub = SUBPIX_MAX + (*x_sub % SUBPIX_MAX);
 	}
 
-	if (s->y_sub > SUBPIX_MAX)
+	if (*y_sub > SUBPIX_MAX)
 	{
-		if ( not ( coll & (COLL_BOTTOM) ) )
-			s->y++;
+		*y+= (*y_sub / SUBPIX_MAX);
 
 		s->y_sub %= SUBPIX_MAX;
 	}
-	else if (s->y_sub < 0)
+	else if (*y_sub < 0)
 	{
-//		if ( not ( coll & (COLL_TOP) ) )
 		*y += (*y_sub / SUBPIX_MAX) - 1;
 
-		s->y_sub = SUBPIX_MAX;
+		*y_sub = SUBPIX_MAX + (*y_sub % SUBPIX_MAX);
 	}
 }
 
@@ -265,6 +269,62 @@ void Engine::playerInput()
 
 //////////////////////////
 
+void Engine::snowballSpawner()
+{
+	for (int i = 0; i < SNOWBALL_COUNT; i++)
+	{
+		if ( snowball[i].getEnabled() )
+		{
+			if ( snowball[i].getX() < XMIN ||
+				 snowball[i].getX() > XMAX ||
+				 snowball[i].getY() < YMIN ||
+				 snowball[i].getY() > YMAX )
+			{
+				snowballRandomise(&snowball[i]);
+			}
+		}
+	}
+}
+
+void Engine::snowballRandomise(IObject* s)
+{
+	srand( rand() % rand_seed );
+	rand_seed = rand();
+
+	uint8_t side = rand() % 4;
+
+	switch (side)
+	{
+	case 0:
+		s->setX( rand() % (XMAX - XMIN) + XMIN);
+		s->setY( YMIN + 1 );
+		s->setX_spd(0);
+		s->setY_spd( rand() % 100 + MIN_SPD);
+		break;
+
+	case 1:
+		s->setX( XMAX - 1 );
+		s->setY( rand() % (YMAX - YMIN) + YMIN);
+		s->setX_spd( -(rand() % 100) - MIN_SPD);
+		s->setY_spd( 0 );
+		break;
+
+	case 2:
+		s->setX( rand() % (XMAX - XMIN) + XMIN);
+		s->setY( YMAX - 1 );
+		s->setX_spd(0);
+		s->setY_spd( -(rand() % 100) - MIN_SPD);
+		break;
+
+	case 3:
+		s->setX( XMIN + 1 );
+		s->setY( rand() % (YMAX - YMIN) + YMIN);
+		s->setX_spd( rand() % 100 + MIN_SPD);
+		s->setY_spd( 0 );
+		break;
+	}
+}
+
 /////////////////// HELPER METHODS ///////////////////////
 //////////////////////////////////////////////////////////
 
@@ -295,8 +355,6 @@ void Engine::checkRefreshRate()
 		char str1[20];
 		sprintf( str1, "%d", getTime(debug_clk) );
 		debugPrintln( str1 );
-
-		printSpriteInfo(&snowball[0]);
 
 		setTime(debug_clk, 0);
 		frame = 0;
