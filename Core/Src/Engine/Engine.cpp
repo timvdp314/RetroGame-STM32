@@ -288,64 +288,10 @@ void Engine::snowballSpawner()
 	}
 }
 
-void Engine::snowballSpawner()
-{
-	for (int i = 0; i < SNOWBALL_COUNT; i++)
-	{
-		if ( snowball[i].getEnabled() )
-		{
-			if ( snowball[i].getX() < XMIN ||
-				 snowball[i].getX() > XMAX ||
-				 snowball[i].getY() < YMIN ||
-				 snowball[i].getY() > YMAX )
-			{
-				snowballRandomise(&snowball[i]);
-			}
-		}
-	}
-}
-
 void Engine::snowballRandomise(IObject* s)
 {
 	srand( rand() % rand_seed );
 	rand_seed = rand();
-
-	uint8_t side = rand() % 4;
-
-	switch (side)
-	{
-	case 0:
-		s->setX( rand() % (XMAX - XMIN) + XMIN);
-		s->setY( YMIN + 1 );
-		s->setX_spd(0);
-		s->setY_spd( rand() % 100 + MIN_SPD);
-		break;
-
-	case 1:
-		s->setX( XMAX - 1 );
-		s->setY( rand() % (YMAX - YMIN) + YMIN);
-		s->setX_spd( -(rand() % 100) - MIN_SPD);
-		s->setY_spd( 0 );
-		break;
-
-	case 2:
-		s->setX( rand() % (XMAX - XMIN) + XMIN);
-		s->setY( YMAX - 1 );
-		s->setX_spd(0);
-		s->setY_spd( -(rand() % 100) - MIN_SPD);
-		break;
-
-	case 3:
-		s->setX( XMIN + 1 );
-		s->setY( rand() % (YMAX - YMIN) + YMIN);
-		s->setX_spd( rand() % 100 + MIN_SPD);
-		s->setY_spd( 0 );
-		break;
-	}
-}
-
-/////////////////// HELPER METHODS ///////////////////////
-//////////////////////////////////////////////////////////
 
 	uint8_t side = rand() % 4;
 
