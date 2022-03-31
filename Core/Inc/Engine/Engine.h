@@ -18,15 +18,26 @@ extern UART_HandleTypeDef huart2;
 ////////////////
 
 		//Name	   //GPIO pin number      //Pin on STM32		
-#define P1_LEFT_PIN     GPIO_PIN_9  //PA9  		    D8
-#define P1_DOWN_PIN     GPIO_PIN_7  //PC7 		    D9
-#define P1_UP_PIN       GPIO_PIN_6  //PB6  		    D10
-#define P1_RIGHT_PIN    GPIO_PIN_7  //PA7  		    D11					 
+#define P1_LEFT_PIN     GPIO_PIN_9  //PA9  		 D8
+#define P1_DOWN_PIN     GPIO_PIN_7  //PC7 		 D9
+#define P1_UP_PIN       GPIO_PIN_6  //PB6  		 D10
+#define P1_RIGHT_PIN    GPIO_PIN_7  //PA7  		 D11
 
 #define P1_LEFT_PORT    GPIOA
 #define P1_DOWN_PORT    GPIOC
 #define P1_UP_PORT      GPIOB
 #define P1_RIGHT_PORT   GPIOA
+
+//Name	   		   //GPIO pin number      //Pin on STM32
+#define P2_LEFT_PIN     GPIO_PIN_6  //PA6  		 D12
+#define P2_DOWN_PIN     GPIO_PIN_5  //PA5 		 D13
+#define P2_UP_PIN       GPIO_PIN_9  //PB9 		 D14
+#define P2_RIGHT_PIN    GPIO_PIN_8  //PB8  		 D15
+
+#define P2_LEFT_PORT    GPIOA
+#define P2_DOWN_PORT    GPIOA
+#define P2_UP_PORT      GPIOB
+#define P2_RIGHT_PORT   GPIOB
 
 #include <Engine/Game-entities/Player.h>
 #include <Engine/Game-entities/Snowball.h>
@@ -35,10 +46,10 @@ extern UART_HandleTypeDef huart2;
 
 #include <Engine/Interface/SPI.h>
 
-#define COLL_RIGHT 1 << 0
-#define COLL_LEFT 1 << 1
-#define COLL_BOTTOM 1 << 2
-#define COLL_TOP 1 << 3
+#define COLL_RIGHT 0
+#define COLL_TOP 1
+#define COLL_LEFT 2
+#define COLL_BOTTOM 3
 
 enum class SPR{
 	PLAYER,
@@ -64,9 +75,16 @@ public:
 	void screenUpdate();
 
 // Sprite functions
+	// Movement
 	void spritePosUpdate(IObject*);
 	void spriteSubpixUpdate(IObject*);
+
+	// Collision
 	uint8_t isColliding(IObject*);
+	bool checkAnyCollision(IObject*, IObject*);
+	uint8_t checkSidesCollision(IObject*, IObject*);
+
+	// Snowball spawner
 	void snowballSpawner();
 	void snowballRandomise(IObject*);
 
@@ -121,20 +139,26 @@ private:
 	const uint8_t ICECUBE_ID = POWERUP_ID + POWERUP_COUNT;
 
 	// Snowball data
-	const uint8_t MIN_SPD = 125;
+	const uint8_t MIN_SPD = 150;
 
 	// Sprite data
 	const uint8_t PLAYER_W = 46;
 	const uint8_t PLAYER_H = 50;
-	const uint8_t PLAYER_SPD = 75;
+	const uint8_t PLAYER_SPD = 125;
 	const uint8_t SNOWBALL_W = 20;
 	const uint8_t SNOWBALL_H = 20;
 
 	// Screen information
-	const uint16_t XMIN = 110; //130
-	const uint16_t XMAX = 800; //800
-	const uint16_t YMIN = 15;  //15
-	const uint16_t YMAX = 513; //531
+	const uint16_t XMIN = 144;
+	const uint16_t XMAX = 784;
+	const uint16_t YMIN = 31;
+	const uint16_t YMAX = 511;
+
+	// Despawn limits for snowballs and icecubes
+	const uint16_t XMIN_OUT = 110; //130
+	const uint16_t XMAX_OUT = 800; //800
+	const uint16_t YMIN_OUT = 15;  //15
+	const uint16_t YMAX_OUT = 513; //531
 
 	const uint16_t TICK_FREQ = 1000;
 	const uint16_t SUBPIX_MAX = 1000;
@@ -144,6 +168,8 @@ private:
 
 	// Misc
 	uint32_t rand_seed = 0;
+
+	const uint8_t ICECUBE_BORDER = 3;
 
 	// Debug variables
 	uint8_t frame = 0;

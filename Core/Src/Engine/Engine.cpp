@@ -57,13 +57,10 @@ Engine::Engine(TIM_HandleTypeDef* refresh_clk,
 	player[0].setX( (XMAX - XMIN) / 2 + XMIN );
 	player[0].setY( (YMAX - YMIN) / 2 + YMIN );
 	player[0].setEnabled(1);
-	player[0].setId(2);
 
-//	player[1].setX(400);
-//	player[1].setY(400);
-//	player[1].setX_spd(0);
-//	player[1].setY_spd(0);
-//	player[1].setEnabled(0);
+	player[1].setX( (XMAX - XMIN) / 4 + XMIN );
+	player[1].setY( (YMAX - YMIN) / 2 + YMIN );
+	player[1].setEnabled(1);
 
 	snowball[0].setEnabled(1);
 	snowball[1].setEnabled(1);
@@ -71,15 +68,19 @@ Engine::Engine(TIM_HandleTypeDef* refresh_clk,
 	snowball[3].setEnabled(1);
 	snowball[4].setEnabled(1);
 //
-//	icecube[0].setId(8);
-//	icecube[0].setY(175);
-//	icecube[0].setX(200);
-//	icecube[0].setEnabled(1);
-//
-//	icecube[1].setId(9);
-//	icecube[1].setY(300);
-//	icecube[1].setX(400);
-//	icecube[1].setEnabled(1);
+	icecube[0].setId(8);
+	icecube[0].setY(175);
+	icecube[0].setX(200);
+	icecube[0].setW(64);
+	icecube[0].setH(80);
+	icecube[0].setEnabled(1);
+
+	icecube[1].setId(9);
+	icecube[1].setY(400);
+	icecube[1].setX(400);
+	icecube[1].setW(160);
+	icecube[1].setH(32);
+	icecube[1].setEnabled(1);
 }
 
 Engine::~Engine() {
@@ -130,7 +131,7 @@ void Engine::spritesUpdate()
 		if ( icecube[i].getEnabled() && (icecube[i].getX_spd() || icecube[i].getY_spd()) )
 			spritePosUpdate(&icecube[i]);
 
-	isColliding(&player[0]);
+//	isColliding(&player[0]);
 }
 
 
@@ -157,13 +158,6 @@ void Engine::screenUpdate()
 void Engine::spritePosUpdate(IObject* spr)
 {
 	spriteSubpixUpdate(spr);
-
-//
-//	if ( coll & (COLL_RIGHT | COLL_LEFT) && spr->hasChanged(CHECK_X) )
-//		spr->x_spd *= -1;
-//
-//	if ( coll & (COLL_BOTTOM | COLL_TOP) && spr->hasChanged(CHECK_Y) )
-//		spr->y_spd *= -1;
 }
 
 void Engine::spriteSubpixUpdate(IObject* s)
@@ -179,26 +173,26 @@ void Engine::spriteSubpixUpdate(IObject* s)
 
 	if (*x_sub > SUBPIX_MAX)
 	{
-		*x += (*x_sub / SUBPIX_MAX);
+		*x += (*x_sub / SUBPIX_MAX) * s->isFree[FREE_RIGHT];
 
 		s->x_sub %= SUBPIX_MAX;
 	}
 	else if (s->x_sub < 0)
 	{
-		*x += (*x_sub / SUBPIX_MAX) - 1;
+		*x += ( (*x_sub / SUBPIX_MAX) - 1 ) * s->isFree[FREE_LEFT];
 
 		*x_sub = SUBPIX_MAX + (*x_sub % SUBPIX_MAX);
 	}
 
 	if (*y_sub > SUBPIX_MAX)
 	{
-		*y+= (*y_sub / SUBPIX_MAX);
+		*y+= (*y_sub / SUBPIX_MAX) * s->isFree[FREE_BOTTOM];
 
 		s->y_sub %= SUBPIX_MAX;
 	}
 	else if (*y_sub < 0)
 	{
-		*y += (*y_sub / SUBPIX_MAX) - 1;
+		*y += ( (*y_sub / SUBPIX_MAX) - 1 ) * s->isFree[FREE_TOP];
 
 		*y_sub = SUBPIX_MAX + (*y_sub % SUBPIX_MAX);
 	}
@@ -208,44 +202,146 @@ uint8_t Engine::isColliding(IObject* s)
 {
 	uint8_t res = 0;
 
-	uint16_t xmin = s->x - s->w / 2;
-	uint16_t xmax = s->x + s->w / 2;
-	uint16_t ymin = s->y - s->h / 2;
-	uint16_t ymax = s->y + s->h / 2;
-
 	IObject* o;
+
+	uint16_t xmin_s = s->x - s->w / 2;
+	uint16_t xmax_s = s->x + s->w / 2;
+	uint16_t ymin_s = s->y - s->h / 2;
+	uint16_t ymax_s = s->y + s->h / 2;
 
 	if (s->type == SPR::PLAYER)
 	{
-		for (int i = 0; i < SNOWBALL_COUNT; i++)
+		/// Reset collision check
+		for (int i = 0; i < 4; i++) s->isFree[i] = 1;
+
+		/// Check screen borders
+		if (xmin_s <= XMIN_OUT) s->isFree[FREE_LEFT] = 0;
+		if (xmax_s >= XMAX_OUT) s->isFree[FREE_RIGHT] = 0;
+		if (ymin_s <= YMIN_OUT) s->isFree[FREE_TOP] = 0;
+		if (ymax_s >= YMAX_OUT) s->isFree[FREE_BOTTOM] = 0;
+
+		/// Check ice cubes
+		for (int i = 0; i < ICECUBE_COUNT; i++)
 		{
-			o = &snowball[i];
+			o = &icecube[i];
 
-			if (snowball[i].getEnabled())
+			if (o->en)
 			{
-				for (int i = 0; i < 4; i++)
-				{
-					if (o->corner[i].x <= xmax && o->corner[i].x >= xmin &&
-						o->corner[i].y <= ymax && o->corner[i].y >= ymin)
-					{
-						for (int j = 0; j < SNOWBALL_COUNT; j++)
-							snowball[j].x = XMIN - 20;
+				res = checkSidesCollision(s, o);
 
-						s->x = (XMAX - XMIN) / 2 + XMIN;
-						s->y = (YMAX - YMIN) / 2 + YMIN;
-					}
-				}
+				for (int i = 0; i < 4; i++)
+					if ( (res >> i) & 1 )
+						s->isFree[i] = 0;
 			}
 		}
-	}
 
-//	if (xmax >= XMAX) res |= 1 << 0; // Collision on right side
-//	if (xmin <= XMIN) res |= 1 << 1; // Collision on left side
-//	if (ymax >= YMAX) res |= 1 << 2; // Collision on bottom side
-//	if (ymin <= YMIN) res |= 1 << 3; // Collision on top side
+		/// Check other player
+		if (s == &player[0])
+			o = &player[1];
+		else
+			o = &player[0];
+
+		if (o->en)
+		{
+			res = checkSidesCollision(s, o);
+
+			for (int i = 0; i < 4; i++)
+				if ( (res >> i) & 1 )
+					s->isFree[i] = 0;
+		}
+
+		// Player -> snowball collision
+//		for (int i = 0; i < SNOWBALL_COUNT; i++)
+//		{
+//			o = &snowball[i];
+//
+//			if (o->getEnabled())
+//			{
+//				if ( checkAnyCollision(s, o) )
+//				{
+//					for (int j = 0; j < SNOWBALL_COUNT; j++)
+//						snowball[j].x = XMIN - 20;
+//
+//					s->x = (XMAX - XMIN) / 2 + XMIN;
+//					s->y = (YMAX - YMIN) / 2 + YMIN;
+//				}
+//			}
+//		}
+	}
 
 	return res;
 }
+
+bool Engine::checkAnyCollision(IObject* s, IObject* o)
+{
+	uint16_t xmin_s = s->x - s->w / 2;
+	uint16_t xmax_s = s->x + s->w / 2;
+	uint16_t ymin_s = s->y - s->h / 2;
+	uint16_t ymax_s = s->y + s->h / 2;
+
+	uint16_t xmin_o = o->x - o->w / 2;
+	uint16_t xmax_o = o->x + o->w / 2;
+	uint16_t ymin_o = o->y - o->h / 2;
+	uint16_t ymax_o = o->y + o->h / 2;
+
+	return ( not (xmin_s >= xmax_o || xmax_s <= xmin_o ||
+			 ymin_s >= ymax_o || ymax_s <= ymin_o) );
+}
+
+uint8_t Engine::checkSidesCollision(IObject* s, IObject* o)
+{
+	uint8_t res = 0;
+
+	uint16_t xmin_s = s->x - s->w / 2;
+	uint16_t xmax_s = s->x + s->w / 2;
+	uint16_t ymin_s = s->y - s->h / 2;
+	uint16_t ymax_s = s->y + s->h / 2;
+
+	uint16_t xmin_o = o->x - o->w / 2;
+	uint16_t xmax_o = o->x + o->w / 2;
+	uint16_t ymin_o = o->y - o->h / 2;
+	uint16_t ymax_o = o->y + o->h / 2;
+
+	/// Determine which side collision is occuring
+	// Collision bottom side
+	if ( ymax_s >= ymin_o - ICECUBE_BORDER)
+	{
+		if ((s->corner[CORNER_BR].x >= xmin_o && s->corner[CORNER_BR].x <= xmax_o && s->corner[CORNER_BR].y <= (ymax_o - o->h / 2) )
+		or ( s->corner[CORNER_BL].x >= xmin_o && s->corner[CORNER_BL].x <= xmax_o && s->corner[CORNER_BL].y <= (ymax_o - o->h / 2) )
+		or ( o->corner[CORNER_TR].x >= xmin_s && o->corner[CORNER_TR].x <= xmax_s && s->corner[CORNER_BR].y <= (ymax_o - o->h / 2) ) )
+				res |= 1 << COLL_BOTTOM;
+	}
+
+	// Collision top side
+	if ( ymin_s <= ymax_o + ICECUBE_BORDER)
+	{
+		if ((s->corner[CORNER_TR].x >= xmin_o && s->corner[CORNER_TR].x <= xmax_o && s->corner[CORNER_TR].y >= (ymin_o + o->h / 2) )
+		or ( s->corner[CORNER_TL].x >= xmin_o && s->corner[CORNER_TL].x <= xmax_o && s->corner[CORNER_TL].y >= (ymin_o + o->h / 2) )
+		or ( o->corner[CORNER_BR].x >= xmin_s && o->corner[CORNER_BR].x <= xmax_s && s->corner[CORNER_TR].y >= (ymin_o + o->h / 2) ) )
+				res |= 1 << COLL_TOP;
+	}
+
+	// Collision right side
+	if ( xmax_s >= xmin_o - ICECUBE_BORDER)
+	{
+		if ((s->corner[CORNER_BR].y >= ymin_o && s->corner[CORNER_BR].y <= ymax_o && s->corner[CORNER_BR].x <= (xmax_o - o->w / 2) )
+		or ( s->corner[CORNER_TR].y >= ymin_o && s->corner[CORNER_TR].y <= ymax_o && s->corner[CORNER_TR].x <= (xmax_o - o->w / 2) )
+		or ( o->corner[CORNER_TL].y >= ymin_s && o->corner[CORNER_TL].y <= ymax_s && s->corner[CORNER_BR].x <= (xmax_o - o->w / 2) ) )
+				res |= 1 << COLL_RIGHT;
+	}
+
+	// Collision left side
+	if ( xmin_s <= xmax_o + ICECUBE_BORDER)
+	{
+		if ((s->corner[CORNER_BL].y >= ymin_o && s->corner[CORNER_BL].y <= ymax_o && s->corner[CORNER_BL].x >= (xmin_o + o->w / 1.5) )
+		or ( s->corner[CORNER_TL].y >= ymin_o && s->corner[CORNER_TL].y <= ymax_o && s->corner[CORNER_TL].x >= (xmin_o + o->w / 1.5) )
+		or ( o->corner[CORNER_TR].y >= ymin_s && o->corner[CORNER_TR].y <= ymax_s && s->corner[CORNER_TL].x >= (xmin_o + o->w / 1.5) ) )
+				res |= 1 << COLL_LEFT;
+	}
+
+	return res;
+}
+
 
 /////////////////// MISC METHODS ///////////////////////
 ////////////////////////////////////////////////////////
@@ -265,6 +361,20 @@ void Engine::playerInput()
         player[0].setX_spd(PLAYER_SPD);
     else
         player[0].setX_spd(0);
+
+    if (getInput(P2_UP_PORT, P2_UP_PIN))
+        player[1].setY_spd(-PLAYER_SPD);
+    else if (getInput(P2_DOWN_PORT, P2_DOWN_PIN))
+        player[1].setY_spd(PLAYER_SPD);
+    else
+    	player[1].setY_spd(0);
+
+    if (getInput(P2_LEFT_PORT, P2_LEFT_PIN))
+        player[1].setX_spd(-PLAYER_SPD);
+    else if (getInput(P2_RIGHT_PORT, P2_RIGHT_PIN))
+        player[1].setX_spd(PLAYER_SPD);
+    else
+        player[1].setX_spd(0);
 }
 
 //////////////////////////
