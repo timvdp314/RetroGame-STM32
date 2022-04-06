@@ -20,6 +20,16 @@ extern UART_HandleTypeDef huart2;
 #define CHECK_X 1
 #define CHECK_Y 2
 
+#define FREE_RIGHT 0
+#define FREE_TOP 1
+#define FREE_LEFT 2
+#define FREE_BOTTOM 3
+
+#define CORNER_TR 0
+#define CORNER_TL 1
+#define CORNER_BL 2
+#define CORNER_BR 3
+
 class Engine;
 enum class SPR;
 
@@ -84,6 +94,9 @@ protected:
 	int16_t y_spd = 0;
 
 	COORD corner[4];
+	bool isFree[4] = {1, 1, 1, 1};
+
+	const uint8_t spr_border = 3;
 
 	const uint16_t TICK_MAX = 1000;
 
