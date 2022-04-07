@@ -111,12 +111,8 @@ void Engine::gameUpdate()
 {
 	playerInput();
 	snowballSpawner();
-
-	if ( getTime(tick_clk) )
-	{
-		spritesUpdate();
-		setTime(tick_clk, 0);
-	}
+	despawnIcecubes();
+	spritesUpdate();
 }
 
 
@@ -149,8 +145,13 @@ void Engine::screenUpdate()
 			spi.send_gfx_packet(snowball[i]);
 
 	for (int i = 0; i < ICECUBE_COUNT; i++)
+	{
+		icecube[i].x_spd = 0;
+		icecube[i].y_spd = 0;
+
 		if (icecube[i].hasChanged())
 			spi.send_gfx_packet(icecube[i]);
+	}
 
 	spi.send_confirm();
 }
@@ -218,10 +219,10 @@ uint8_t Engine::isColliding(IObject* s)
 		for (int i = 0; i < 4; i++) s->isFree[i] = 1;
 
 		/// Check screen borders
-		if (xmin_s <= XMIN_OUT) s->isFree[FREE_LEFT] = 0;
-		if (xmax_s >= XMAX_OUT) s->isFree[FREE_RIGHT] = 0;
-		if (ymin_s <= YMIN_OUT) s->isFree[FREE_TOP] = 0;
-		if (ymax_s >= YMAX_OUT) s->isFree[FREE_BOTTOM] = 0;
+		if (xmin_s <= XMIN) s->isFree[FREE_LEFT] = 0;
+		if (xmax_s >= XMAX) s->isFree[FREE_RIGHT] = 0;
+		if (ymin_s <= YMIN) s->isFree[FREE_TOP] = 0;
+		if (ymax_s >= YMAX) s->isFree[FREE_BOTTOM] = 0;
 
 		/// Check ice cubes
 		for (int i = 0; i < ICECUBE_COUNT; i++)
@@ -234,7 +235,15 @@ uint8_t Engine::isColliding(IObject* s)
 
 				for (int i = 0; i < 4; i++)
 					if ( (res >> i) & 1 )
+					{
+						if ( (s->x_spd > 0 && i == FREE_RIGHT) || (s->x_spd < 0 && i == FREE_LEFT) )
+							o->x_spd = s->x_spd*2;
+
+						if ( (s->y_spd < 0 && i == FREE_TOP) || (s->y_spd > 0 && i == FREE_BOTTOM) )
+							o->y_spd = s->y_spd*2;
+
 						s->isFree[i] = 0;
+					}
 			}
 		}
 
@@ -351,19 +360,53 @@ uint8_t Engine::checkSidesCollision(IObject* s, IObject* o)
 
 void Engine::playerInput()
 {
-    if (getInput(P1_UP_PORT, P1_UP_PIN))
-        player[0].setY_spd(-PLAYER_SPD);
-    else if (getInput(P1_DOWN_PORT, P1_DOWN_PIN))
-        player[0].setY_spd(PLAYER_SPD);
-    else
-    	player[0].setY_spd(0);
+    if (!getInput(P1_ACTION_PORT, P1_ACTION_PIN)){
+    	player[0].dash_btnState = false;
+    }
 
-    if (getInput(P1_LEFT_PORT, P1_LEFT_PIN))
-        player[0].setX_spd(-PLAYER_SPD);
-    else if (getInput(P1_RIGHT_PORT, P1_RIGHT_PIN))
-        player[0].setX_spd(PLAYER_SPD);
-    else
-        player[0].setX_spd(0);
+    if (player[0].dashCooldown > 0)
+    {
+    	player[0].dashCooldown -= getTime(tick_clk);
+    	if (player[0].dashCooldown < 0) player[0].dashCooldown = 0;
+    }
+
+	if (player[0].hasDashed)
+		player[0].dashTimer += getTime(tick_clk);
+
+	if (player[0].dashTimer > 100)
+	{
+		player[0].hasDashed = 0;
+		player[0].dashTimer = 0;
+	}
+
+	if (player[0].hasDashed == false)
+	{
+	    if (getInput(P1_UP_PORT, P1_UP_PIN))
+	        player[0].setY_spd(-PLAYER_SPD);
+	    else if (getInput(P1_DOWN_PORT, P1_DOWN_PIN))
+	        player[0].setY_spd(PLAYER_SPD);
+	    else
+	    	player[0].setY_spd(0);
+
+	    if (getInput(P1_LEFT_PORT, P1_LEFT_PIN))
+	        player[0].setX_spd(-PLAYER_SPD);
+	    else if (getInput(P1_RIGHT_PORT, P1_RIGHT_PIN))
+	        player[0].setX_spd(PLAYER_SPD);
+	    else
+	        player[0].setX_spd(0);
+	}
+
+	setTime(tick_clk, 0);
+
+    if (getInput(P1_ACTION_PORT, P1_ACTION_PIN) && (player[0].dash_btnState == false) && (player[0].dashCooldown == 0) )
+    {
+    		player[0].dash_btnState = true;
+    		player[0].hasDashed = true;
+    		player[0].dashCooldown = PLAYER_DASH_CD;
+
+    		player[0].setY_spd(player[0].getY_spd() * 5);
+    		player[0].setX_spd(player[0].getX_spd() * 5);
+    }
 
     if (getInput(P2_UP_PORT, P2_UP_PIN))
         player[1].setY_spd(-PLAYER_SPD);
@@ -433,6 +476,43 @@ void Engine::snowballRandomise(IObject* s)
 		s->setX_spd( rand() % 100 + MIN_SPD);
 		s->setY_spd( 0 );
 		break;
+	}
+}
+
+void Engine::despawnIcecubes()
+{
+	uint16_t xmin, xmax, ymin, ymax;
+
+	for (int i = 0; i < ICECUBE_COUNT; i++)
+	{
+		IObject* s = &icecube[i];
+
+		if (!s->en)
+			continue;
+
+		xmin = s->x - s->w / 2;
+		xmax = s->x + s->w / 2;
+		ymin = s->y - s->h / 2;
+		ymax = s->y + s->h / 2;
+
+		if (xmax < XMIN_OUT || xmin > XMAX_OUT || ymax < YMIN_OUT || ymin > YMAX_OUT)
+		{
+//			s->x_spd = 0;
+//			s->y_spd = 0;
+			s->x = 0;
+			s->y = 0;
+			continue;
+		}
+
+		if (xmin < XMIN_OUT)
+			s->x_spd = -PLAYER_SPD * 0.5;
+		else if (xmax > XMAX_OUT)
+			s->x_spd = PLAYER_SPD * 0.5;
+
+		if (ymin < YMIN_OUT)
+			s->y_spd = -PLAYER_SPD * 0.5;
+		else if (ymax > YMAX_OUT)
+			s->y_spd = PLAYER_SPD * 0.5;
 	}
 }
 

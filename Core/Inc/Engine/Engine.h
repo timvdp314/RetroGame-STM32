@@ -17,22 +17,25 @@
 extern UART_HandleTypeDef huart2;
 ////////////////
 
-		//Name	   //GPIO pin number      //Pin on STM32		
+//Name	   //GPIO pin number      //Pin on STM32
 #define P1_LEFT_PIN     GPIO_PIN_9  //PA9  		 D8
 #define P1_DOWN_PIN     GPIO_PIN_7  //PC7 		 D9
 #define P1_UP_PIN       GPIO_PIN_6  //PB6  		 D10
 #define P1_RIGHT_PIN    GPIO_PIN_7  //PA7  		 D11
+#define P1_ACTION_PIN	GPIO_PIN_10 //PA10		 D2
 
 #define P1_LEFT_PORT    GPIOA
 #define P1_DOWN_PORT    GPIOC
 #define P1_UP_PORT      GPIOB
 #define P1_RIGHT_PORT   GPIOA
+#define P1_ACTION_PORT  GPIOA
 
 //Name	   		   //GPIO pin number      //Pin on STM32
 #define P2_LEFT_PIN     GPIO_PIN_6  //PA6  		 D12
 #define P2_DOWN_PIN     GPIO_PIN_5  //PA5 		 D13
 #define P2_UP_PIN       GPIO_PIN_9  //PB9 		 D14
 #define P2_RIGHT_PIN    GPIO_PIN_8  //PB8  		 D15
+#define P1_ACTION_PIN	GPIO_PIN_10 //PA10		 D7
 
 #define P2_LEFT_PORT    GPIOA
 #define P2_DOWN_PORT    GPIOA
@@ -92,6 +95,9 @@ public:
 	void snowballSpawner();
 	void snowballRandomise(IObject*);
 
+	// Icecube
+	void despawnIcecubes();
+
 // Misc
 	void playerInput();
 
@@ -149,6 +155,7 @@ private:
 	const uint8_t PLAYER_W = 46;
 	const uint8_t PLAYER_H = 50;
 	const uint8_t PLAYER_SPD = 125;
+	const int16_t PLAYER_DASH_CD = 1000;
 	const uint8_t SNOWBALL_W = 20;
 	const uint8_t SNOWBALL_H = 20;
 
@@ -156,13 +163,13 @@ private:
 	const uint16_t XMIN = 144;
 	const uint16_t XMAX = 784;
 	const uint16_t YMIN = 31;
-	const uint16_t YMAX = 511;
+	const uint16_t YMAX = 505;
 
 	// Despawn limits for snowballs and icecubes
 	const uint16_t XMIN_OUT = 110; //130
 	const uint16_t XMAX_OUT = 800; //800
-	const uint16_t YMIN_OUT = 15;  //15
-	const uint16_t YMAX_OUT = 513; //531
+	const uint16_t YMIN_OUT = 0;  //15
+	const uint16_t YMAX_OUT = 509; //531
 
 	const uint16_t TICK_FREQ = 1000;
 	const uint16_t SUBPIX_MAX = 1000;
