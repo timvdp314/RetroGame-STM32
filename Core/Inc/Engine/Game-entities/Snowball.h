@@ -15,6 +15,12 @@ class Snowball : public IObject {
 public:
 	Snowball();
 	virtual ~Snowball();
+
+private:
+	bool spawned = 1;
+	int16_t respawn_timer = 0;
+
+	friend class Engine;
 };
 
 #endif /* SRC_SNOWBALL_H_ */
